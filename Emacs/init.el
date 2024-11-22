@@ -450,12 +450,16 @@
  (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
 
 
-(when buffer-file-name
-  (cond ((file-exists-p buffer-file-name) t)
-        ((string-match "\\.hin$" buffer-file-name) (sleepster-source-format))
-        ((string-match "\\.cin$" buffer-file-name) (sleepster-source-format))
-        ((string-match "\\.h$" buffer-file-name) (sleepster-header-format))
-        ((string-match "\\.cpp$" buffer-file-name) (sleepster-source-format))))
+(defun sleepster-insert-header-or-source-format ()
+  "Insert appropriate header or source format for new files."
+  (when (and buffer-file-name (eq (point-min) (point-max))) ;; Check if the buffer is empty
+    (cond 
+     ((string-match "\\.hin$" buffer-file-name) (sleepster-source-format))
+     ((string-match "\\.cin$" buffer-file-name) (sleepster-source-format))
+     ((string-match "\\.h$" buffer-file-name) (sleepster-header-format))
+     ((string-match "\\.cpp$" buffer-file-name) (sleepster-source-format)))))
+
+(add-hook 'find-file-hook 'sleepster-insert-header-or-source-format)
 
 ;; Ensure the same file opens only in one window
 (defun my-find-file (filename)
