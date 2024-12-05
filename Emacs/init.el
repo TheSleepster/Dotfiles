@@ -1,4 +1,4 @@
-(defvar elpaca-installer-version 0.7)
+(defvar elpaca-installer-version -1.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -108,20 +108,6 @@
    "gcc" 'comment-line      ;; Comment out current line
    "gci" 'comment-region)   ;; Comment out selected region
 
-    (general-define-key
-     :states 'normal
-     "<S-left>" 'evil-shift-left  ;; Shift left action in normal mode
-     "<S-right>" 'evil-shift-right)  ;; Shift right action in normal mode
-
-    (general-define-key
-     :states 'visual
-     "<S-left>" (lambda ()
-                   (interactive)
-                   (call-interactively 'evil-shift-left))  ;; Shift left in visual mode
-     "<S-right>" (lambda ()
-                   (interactive)
-                   (call-interactively 'evil-shift-right)))   ;; Shift right in visual mode
-
   ;; Keybindings for commenting
   (general-define-key
    :states '(normal visual)
@@ -131,11 +117,20 @@
 
   ;; Custom comment insertion with TODO, NOTE, IMPORTANT
   (dt/leader-keys
-   "t" '(:ignore t :wk "Insert Comments")
-   "tt" '(lambda () (interactive) (insert-comment-with-prefix "TODO(") :wk "Insert TODO")
-   "tn" '(lambda () (interactive) (insert-comment-with-prefix "NOTE(") :wk "Insert NOTE")
-   "ti" '(lambda () (interactive) (insert-comment-with-prefix "IMPORTANT(") :wk "Insert IMPORTANT"))
+   "t" '(lambda () (interactive) (insert-comment-with-prefix "TODO(") :wk "Insert TODO")
+   "n" '(lambda () (interactive) (insert-comment-with-prefix "NOTE)") :wk "Insert NOTE")
+   "i" '(lambda () (interactive) (insert-comment-with-prefix "IMPORTANT(") :wk "Insert IMPORTANT"))
 )
+
+(use-package glsl-mode
+    :ensure t)
+
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold nil     ; if nil, bold is universally disabled
+        doom-themes-enable-italic nil)) ; if nil, italics is universally disabled
 
 ;; Functions for brace insertion
 (defun insert-equals-braces ()
@@ -162,49 +157,24 @@
       (move-beginning-of-line 1)
       (insert line))))
 
-;; Configure Company mode
-(use-package company
-  :ensure t
-  :config
-  (setq company-idle-delay 0.1)
-  (setq company-minimum-prefix-length 1)         ;; Minimum prefix length for completions
-  (setq company-show-numbers t)                  ;; Show numbers for selection
-  (setq company-tooltip-align-annotations t)     ;; Align annotations to the right
-  (setq company-frontends '(company-preview-if-just-one-frontend)) ;; Disable popup UI
-  (global-company-mode 1)                        ;; Enable Company mode globally
-
-  ;; Function to complete only if there are candidates
-  (defun my-company-complete-or-tab ()
-    "Trigger `company-complete-common` if there are candidates; otherwise, insert a tab or spaces."
-    (interactive)
-    (if (company-tooltip-visible-p)
-        (company-complete-common)
-      (insert "\t")))
-
-  ;; Bind TAB to custom function that completes only if there are suggestions
-  (define-key company-mode-map (kbd "TAB") 'my-company-complete-or-tab)
-  (define-key company-active-map (kbd "TAB") 'my-company-complete-or-tab))
-
+;;LSP
 ;; Configure Clangd arguments
 (setq clangd-args '("--header-insertion=never" "--all-tokens"))
 
 (defun my-eglot-setup ()
   (interactive)
-  (eglot-ensure)
-  ;; Set local eglot server programs for C/C++
-  (setq-local eglot-server-programs
-              '((c-mode . ("clangd" "--header-insertion=never" "--all-tokens"))
-                (c++-mode . ("clangd" "--header-insertion=never" "--all-tokens"))))
-  ;; Set ignored capabilities for eglot, excluding signatureHelp for parameter hints
-  (setq-local eglot-ignored-server-capabilities
-              '(:hover :documentHighlight :codeActionProvider
-                       :documentFormattingProvider :documentRangeFormattingProvider
-                       :documentSymbolProvider :documentSymbolProvide :inlayHints))
-  ;; Disable eldoc mode for the buffer
-  (eldoc-mode -1))
+   (eglot-ensure)
+   ;; Set local eglot server programs for C/C++
+   (setq-local eglot-server-programs
+               '((c-mode . ("clangd" "--header-insertion=never" "--all-tokens"))
+                 (c++-mode . ("clangd" "--header-insertion=never" "--all-tokens"))))
+   ;; Set ignored capabilities for eglot, excluding signatureHelp for parameter hints
+   (setq-local eglot-ignored-server-capabilities
+               '(:hover :documentHighlight :codeActionProvider
+                        :documentFormattingProvider :documentRangeFormattingProvider
+                        :documentSymbolProvider :documentSymbolProvide :inlayHints)))
 
 (add-hook 'eglot-managed-mode-hook 'my-eglot-setup)
-(global-eldoc-mode -1)
 
 (with-eval-after-load 'eglot
   ;; Custom function to toggle eglot signature help on demand
@@ -213,10 +183,7 @@
     (interactive)
     (if eldoc-mode
         (eldoc-mode -1)  ;; Hide signature help if it's active
-      (eglot-signature-help)))  ;; Show signature help if it's not active
-
-  ;; Bind `C-h` to manually trigger eglot signature help
-  (define-key eglot-mode-map (kbd "C-h") 'my-eglot-toggle-signature-help))
+      (eglot-signature-help))))  ;; Show signature help if it's not active
 
 ;; GLSL Configuration with Eglot
 (with-eval-after-load 'eglot
@@ -224,26 +191,22 @@
   (setq eglot-ignored-server-capabilities '(:inlayHintProvider))
   (add-to-list 'eglot-server-programs
                '(glsl-mode . ("C:/Users/ibjal/AppData/Local/nvim-data/mason/packages/glsl_analyzer/bin/glsl_analyzer.exe" "--stdio")))
-  (add-to-list 'auto-mode-alist '("\\.\\(fs\\|vs\\|vert\\|frag\\|glsl\\)\\'" . glsl-mode)))
+  (add-to-list 'auto-mode-alist '("\\.\\(fs\\|vs\\|vert\\|frag\\|glsl\\|comp\\|glh\\)\\'" . glsl-mode)))
 
 ;; C# Configuration with Eglot
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs
                '(csharp-mode . ("C:/Users/ibjal/AppData/Local/nvim-data/mason/packages/omnisharp/OmniSharp.exe" "--stdio"))))
 
-;; C/C++ mode setup
-(add-hook 'c-mode-hook
-          (lambda ()
-            (eglot-ensure)
-            (setq-local company-backends '(company-capf))
-            (setq company-idle-delay 0.1) ;; Fixed the syntax here by removing the comma
-            (c-set-offset 'substatement-open 0)))
+ ;; C/C++ mode setup
+ (add-hook 'c-mode-hook
+           (lambda ()
+             (eglot-ensure)
+             (c-set-offset 'substatement-open 0)))
 
-(add-hook 'c++-mode-hook
-          (lambda ()
-            (eglot-ensure)
-            (setq-local company-backends '(company-capf))
-            (setq company-idle-delay 0.1)))
+ (add-hook 'c++-mode-hook
+           (lambda ()
+             (eglot-ensure)))
 
 ;; Language server configurations for Zig, Rust, OdinLang, and Golang
 (with-eval-after-load 'eglot
@@ -255,8 +218,8 @@
 (setq eglot-inlay-hints-mode nil)
 
 
-;CONFIG
 
+;CONFIG
 ;; Windows performance tweaks
 ;;
 (when (boundp 'w32-pipe-read-delay)
@@ -290,9 +253,6 @@
 (setq undo-limit 20000000)
 (setq undo-strong-limit 40000000)
 
-(global-hl-line-mode 1)
-(set-face-background 'hl-line "midnight blue")
-
 
 (setq evil-default-cursor 'box)
 (setq evil-insert-state-cursor 'box)
@@ -303,6 +263,18 @@
 
 (setq sleepster-buildscript "build.bat")
 (setq compilation-directory-locked nil)
+
+(defun silence-all-messages (&rest args)
+  "A no-op function to suppress all messages."
+  nil)
+
+(defun enable-global-silence ()
+  "Globally silence all `message` calls."
+  (advice-add 'message :override #'silence-all-messages))
+
+(defun disable-global-silence ()
+  "Restore normal `message` behavior."
+  (advice-remove 'message #'silence-all-messages))
 
 ;;Additional style stuff
 (setq casey-big-fun-c-style
@@ -351,26 +323,13 @@
 (defun casey-big-fun-c-hook ()
   "Apply Casey's Big Fun C++ Style to the current buffer."
   (c-add-style "BigFun" casey-big-fun-c-style t)
-  ;; No hungry backspace
   (c-toggle-auto-hungry-state -1)
-  ;; 4-space tabs
   (setq tab-width 4
         indent-tabs-mode nil)
-  ;; Newline indents, semi-colon doesn't
   (define-key c++-mode-map "\C-m" 'newline-and-indent)
   (setq c-hanging-semi&comma-criteria '((lambda () 'stop))))
 
 (add-hook 'c-mode-common-hook 'casey-big-fun-c-hook)
-
-; Handle super-tabbify (TAB completes, shift-TAB actually tabs)
-(setq dabbrev-case-replace t)
-(setq dabbrev-case-fold-search t)
-(setq dabbrev-upcase-means-case-search t)
-
-(add-to-list 'default-frame-alist '(font . "LiterationMono Nerd Font-11"))
-(setq-default line-spacing 0.12)
-
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (load-library "view")
 (require 'compile)
@@ -380,6 +339,11 @@
 (ido-mode t)
 
 (abbrev-mode 1)
+
+; Handle super-tabbify (TAB completes, shift-TAB actually tabs)
+(setq dabbrev-case-replace t)
+(setq dabbrev-case-fold-search t)
+(setq dabbrev-upcase-means-case-search t)
 
 (defun load-todo ()
   (interactive)
@@ -398,9 +362,9 @@
 
 ;; Function to insert a comment with a given prefix
 (defun insert-comment-with-prefix (prefix)
-  "Insert a comment with PREFIX and the defined username."
+  "Insert a comment with PREFIX, the defined username, and a closing parenthesis."
   (interactive "sPrefix: ")  ;; Prompt for prefix
-  (insert (format "// %s: " (concat prefix sleepster-username))))
+  (insert (format "// %s%s): " prefix sleepster-username)))
 
 ;; Function to insert current time of day and file name into the header
 (defun sleepster-header-format ()
@@ -588,11 +552,8 @@
         (original-point (point))
         (window-start-point (window-start)))
     (when (find-project-directory)
-      ;; Start the compilation in the opposite window
       (compile sleepster-buildscript)
-      ;; Switch back to the original window
       (select-window original-window))
-    ;; Restore the original window and point
     (set-window-start original-window window-start-point)
     (goto-char original-point)))
 
@@ -616,6 +577,9 @@
 (scroll-bar-mode -1)
 (setq auto-save-default nil)
 (setq compilation-ask-about-save nil)
+
+(add-to-list 'default-frame-alist '(font . "LiterationMono Nerd Font-11"))
+(setq-default line-spacing 0.12)
 
 (display-time)
 (split-window-horizontally)
@@ -646,7 +610,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" default)))
+   '("4337503020251b87200e428a1219cdf89d42fba08bc0a1d8ab031164c7925ea2" "21d883fccc7cd1556fbc7b37d10b709189b316be4317b6d4028b335d8827d541" "4764de4e8898fafa22abf3ebe8fe71d6cd528c45f694e32684afea0b825e5ae4" "417b2e4625b6bccb49c6d0714c8d13af1a27f62102ec6d56b538d696fc5ebf19" "4c4c36513edb1edd045f8170c46563bfbb8a2bfa3a80c8c478bdde204313e8b6" "31014fae0ca149e8bbffe40826f8f5952fdb91ea534914622d614b2219e04eaf" "dc7b0ef1298429908ea0a56a9b455d952a5d54b7775e5a7809e5fa1c8e8d8df8" "01633566bc8bfca5421d3a9ad7b7d91cb10743437c2996796d83a8bcc146c85a" "9a870ed55018161c9f022bf47e0e852078ad97c8021a1a9130af9cde1880bfa4" "dca64882039075757807f5cead3cee7a9704223fab1641a9f1b7982bdbb5a0e2" "058ed73311aaaf42e1da18f6aae2ce0a7fd6e37a819064e54f423369f548359a" "b95e452d5eb81406a3f1f61f9df9c2c6ff2d5eddba9d712fcd0f640e0d7707da" "16ebbe9a60555c0f546f58469a31f2312cbd9afe759901ba0ab08fcedc8030b7" "dc0af05ccfb5fc01cf4b7d9c1b63f652f78e3de844e9a7d8e74ecad1f89c001f" "fa362af0e2ae1bda1bab47bc4f15ede63884a2966394d272839d0143a948ec5a" "a5e8a918a21f1d67110b4c2e819b60cc2de7e49b79a80f483a1923e2c74d04d5" "f6bdf7cc215cbd95e09a66ec0511e0932954eadab4c60189dd82370da3f1b3fa" "80de716bfeec860f43d35d302169385bd0698bfb06fd3c16b5378ef5e3e52a24" "3d6e1dd2683f93b0b68d2672b6d922c817817a3f33e1aa5821216cdf6870c24b" "d143a4dd9292f87b377e87c77f3459d15aa5fb56a670edd2873bd812d95dfa6c" "f03d5bc29c7b8711f8a18cc92dcc2b59b90dcac44e4997daaa4db1ae7d1b419b" "4a892742bd6f8ac795d14a72461ce49bc7eb100583024b0da9b43d79884b7c45" "6e165f5225ce7ce5ca3f2dc8adf827ff8565704bfe625afe4a3cb666a166efd9" "a819fa2e49c3307ec8a8b374f09275ef35b5a47d4fa88b76eba6df7d86bcf70c" "1107071694e48770dfaeb2042b5d2b300efa0a01bfdfe8a9526347fe6f2cc698" "4d12469f94f29f44958a3173a74985f1b6aa383f933a49735d07c3304d77c810" "400fd3e8877904b0cc738d0fded98cdbda263639a007293645f31806895eba9e" "ac4ab3921322aaa6aec49d1268337ec28f88c9ee49fa9cb284d145388fb928a8" "f33b5dfb5c5fb99b5a90feab9158cadc2588c6840211b995622a35419c450b04" "545a268abdb70a28a299242bb79daf7cf1f088ddcbe9518c9d754a6f6159feb6" "42265cac74d3656d9d0b3185d422f8bdaa0f798d842c0a0c2f0786ea387dbe7e" "b6e908ac2a3b9c8a635b36341f19eff119823fea947a0a645bedf77e17e273b8" "3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" default)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -654,19 +618,24 @@
  ;; If there is more than one, they won't work right.
  )
 
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'handmade)
+;;(load-theme 'doom-material-dark)
+;;(load-theme 'doom-miraware)
+;;(load-theme 'doom-nord)
+;;(load-theme 'doom-wilmersdorf)
+
+
+
+(define-key global-map "\t" 'dabbrev-expand)
+(define-key global-map [S-tab] 'indent-for-tab-command)
+(define-key global-map [backtab] 'indent-for-tab-command)
+(define-key global-map "\C-y" 'indent-for-tab-command)
+(define-key global-map [C-tab] 'indent-region)
+(define-key global-map "	" 'indent-region)
+
 (add-to-list 'default-frame-alist '(font . "LiterationMono Nerd Font-11"))
 (set-face-attribute 'default t :font "LiterationMono Nerd Font Propo-11")
-(set-face-attribute 'font-lock-builtin-face nil :foreground "#DAB98F")
-(set-face-attribute 'font-lock-comment-face nil :foreground "gray50")
-(set-face-attribute 'font-lock-constant-face nil :foreground "olive drab")
-(set-face-attribute 'font-lock-doc-face nil :foreground "gray50")
-(set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
-(set-face-attribute 'font-lock-keyword-face nil :foreground "DarkGoldenrod3")
-(set-face-attribute 'font-lock-string-face nil :foreground "olive drab")
-(set-face-attribute 'font-lock-type-face nil :foreground "burlywood3")
-(set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
-(set-face-attribute 'font-lock-function-call-face nil :foreground "DarkGoldenrod3")
 (defun highlight-function-calls ()
   "Highlight function calls in C/C++ modes."
   (font-lock-add-keywords
@@ -677,9 +646,10 @@
 (add-hook 'c-mode-common-hook 'highlight-function-calls)
 
 (defun post-load-stuff ()
+  (interactive)
+  (menu-bar-mode -1)
   (maximize-frame)
-  (set-foreground-color "burlywood3")
-  (set-background-color "#161616")
-  (set-cursor-color "#40FF40")
+  (enable-global-silence)
 )
+
 (add-hook 'window-setup-hook 'post-load-stuff t)
