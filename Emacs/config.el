@@ -26,4 +26,3 @@
   ;    "<S-right>" (lambda ()
   ;                  (interactive)
   ;                  (call-interactively 'evil-shift-right)))   ;; Shift right in visual mode
-

@@ -1,47 +1,21 @@
-(defvar elpaca-installer-version -1.7)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
+(require 'package)
 
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                 ,@(when-let ((depth (plist-get order :depth)))
-                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                 ,(plist-get order :repo) ,repo))))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)"))))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads"))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
-;; Install use-package support
-(elpaca elpaca-use-package
-  ;; Enable use-package :ensure support for Elpaca.
-  (elpaca-use-package-mode))
+(package-initialize)
+(unless package-archive-contents
+ (package-refresh-contents))
+
+(unless (package-installed-p 'use-package)
+   (package-install 'use-package))
+
+(load (locate-user-emacs-file
+       "lisp/org-config.el"))
+
+(load (locate-user-emacs-file "lisp/jai-mode.el"));
+(add-to-list 'auto-mode-alist '("\\.jai\\'" . jai-mode))
 
 ;; Install Evil and related packages
 (use-package evil
@@ -125,6 +99,9 @@
 (use-package glsl-mode
     :ensure t)
 
+(use-package rust-mode
+    :ensure t)
+
 (use-package doom-themes
   :ensure t
   :config
@@ -167,7 +144,8 @@
    ;; Set local eglot server programs for C/C++
    (setq-local eglot-server-programs
                '((c-mode . ("clangd" "--header-insertion=never" "--all-tokens"))
-                 (c++-mode . ("clangd" "--header-insertion=never" "--all-tokens"))))
+                 (c++-mode . ("clangd" "--header-insertion=never" "--all-tokens"))
+                 (jai-mode . ("jails" " "))))
    ;; Set ignored capabilities for eglot, excluding signatureHelp for parameter hints
    (setq-local eglot-ignored-server-capabilities
                '(:hover :documentHighlight :codeActionProvider
@@ -262,6 +240,7 @@
 (setq-default tab-width 4)           ; Set tab width to 4 spaces
 
 (setq sleepster-buildscript "build.bat")
+(setq sleepster-runscript   "run.bat")
 (setq compilation-directory-locked nil)
 
 (defun silence-all-messages (&rest args)
@@ -464,7 +443,6 @@
     (other-window -1))
 
 ; Abbrevation expansion
-(abbrev-mode 1)
 (setq debug-on-error t)
 
 ; Compilation
@@ -502,37 +480,6 @@
   (find-project-directory-recursive)
   (setq last-compilation-directory default-directory)))
 
-(defun sleepster-parse-error (line)
-  "Parse a line of the compilation output to extract the file, line, and column numbers."
-  (let ((regex "\\([^:]+\\)(\\([0-9]+\\)):\\([^\n]+\\)"))
-    (if (string-match regex line)
-        (let ((file (match-string 1 line))
-              (line-num (string-to-number (match-string 2 line))))
-          (list file line-num))
-      nil)))
-
-(defun sleepster-next-error ()
-  "Custom function to go to the next error in the *compilation* buffer."
-  (interactive)
-  (let* ((compilation-buffer (get-buffer "*compilation*"))
-         (lines (split-string (with-current-buffer compilation-buffer (buffer-string)) "\n"))
-         (current-line (line-number-at-pos))
-         (current-window (selected-window)))
-    ;; Loop through the compilation buffer and find the next error
-    (cl-loop for line in lines
-             for line-num = (sleepster-parse-error line)
-             when (and line-num (> (cadr line-num) current-line))
-             return (let ((file (car line-num))
-                          (line-num (cadr line-num)))
-                      (my-find-file file)
-                      (goto-char (point-min))
-                      (forward-line (1- line-num))))))
-
-(global-unset-key (kbd "\ee"))
-(global-unset-key (kbd "\ep"))
-(define-key global-map "\ee" 'sleepster-next-error)
-(define-key global-map "\ep" 'previous-error)
-
 (defun my-display-compilation-in-opposite-window (buffer &optional _)
   "Display the compilation BUFFER in the opposite window."
   (let* ((current-window (selected-window))
@@ -560,10 +507,54 @@
 (setq display-buffer-overriding-action
       '((my-display-compilation-in-opposite-window)))
 
+(defun run-without-asking()
+  "Run a specific compile command."
+  (interactive)
+  (compile "run.bat"))
+
 ;; KEYMAPPINGS
 (define-key global-map "\em" 'make-without-asking)
+(global-set-key (kbd "M-r") 'run-without-asking)
 (define-key global-map [f12] 'sleepster-find-corresponding-file)
 (define-key global-map [M-f12] 'sleepster-find-corresponding-file-other-window)
+
+(defun sleepster-parse-error (line)
+  "Parse a single LINE using `compilation-error-regexp-alist` and return the matched file and line number."
+  (cl-loop for regexp-entry in compilation-error-regexp-alist
+           for regex = (if (consp regexp-entry) (car regexp-entry) regexp-entry)
+           for file-group = (if (consp regexp-entry) (nth 1 regexp-entry) 1)
+           for line-group = (if (consp regexp-entry) (nth 2 regexp-entry) 2)
+           when (string-match regex line)
+           return (list (match-string file-group line)
+                        (string-to-number (match-string line-group line)))))
+
+(defun sleepster-next-error ()
+  "Go to the next error, keeping the *compilation* buffer in its window."
+  (interactive)
+  (let* ((compilation-buffer (get-buffer "*compilation*"))
+         (compilation-window (get-buffer-window compilation-buffer))
+         (target-window
+          (car (cl-remove compilation-window (window-list) :test #'eq))))
+    ;; If in the compilation window, switch to another window
+    (when (eq (selected-window) compilation-window)
+      (select-window target-window))
+    ;; Set the display buffer action to force errors to open in the target window
+    (let ((display-buffer-overriding-action
+           `((display-buffer-use-some-window
+              (inhibit-same-window . t)
+              (inhibit-switch-frame . t)))))
+      (next-error))))
+
+(global-unset-key (kbd "\ee"))
+(global-unset-key (kbd "\ep"))
+(global-unset-key (kbd "M-p"))
+(define-key global-map "\ep" 'previous-error)
+
+(global-unset-key (kbd "M-e"))
+(global-set-key (kbd "M-e") 'sleepster-next-error)
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (local-unset-key (kbd "M-e"))))
 
 
 (defun maximize-frame()
@@ -610,7 +601,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("4337503020251b87200e428a1219cdf89d42fba08bc0a1d8ab031164c7925ea2" "21d883fccc7cd1556fbc7b37d10b709189b316be4317b6d4028b335d8827d541" "4764de4e8898fafa22abf3ebe8fe71d6cd528c45f694e32684afea0b825e5ae4" "417b2e4625b6bccb49c6d0714c8d13af1a27f62102ec6d56b538d696fc5ebf19" "4c4c36513edb1edd045f8170c46563bfbb8a2bfa3a80c8c478bdde204313e8b6" "31014fae0ca149e8bbffe40826f8f5952fdb91ea534914622d614b2219e04eaf" "dc7b0ef1298429908ea0a56a9b455d952a5d54b7775e5a7809e5fa1c8e8d8df8" "01633566bc8bfca5421d3a9ad7b7d91cb10743437c2996796d83a8bcc146c85a" "9a870ed55018161c9f022bf47e0e852078ad97c8021a1a9130af9cde1880bfa4" "dca64882039075757807f5cead3cee7a9704223fab1641a9f1b7982bdbb5a0e2" "058ed73311aaaf42e1da18f6aae2ce0a7fd6e37a819064e54f423369f548359a" "b95e452d5eb81406a3f1f61f9df9c2c6ff2d5eddba9d712fcd0f640e0d7707da" "16ebbe9a60555c0f546f58469a31f2312cbd9afe759901ba0ab08fcedc8030b7" "dc0af05ccfb5fc01cf4b7d9c1b63f652f78e3de844e9a7d8e74ecad1f89c001f" "fa362af0e2ae1bda1bab47bc4f15ede63884a2966394d272839d0143a948ec5a" "a5e8a918a21f1d67110b4c2e819b60cc2de7e49b79a80f483a1923e2c74d04d5" "f6bdf7cc215cbd95e09a66ec0511e0932954eadab4c60189dd82370da3f1b3fa" "80de716bfeec860f43d35d302169385bd0698bfb06fd3c16b5378ef5e3e52a24" "3d6e1dd2683f93b0b68d2672b6d922c817817a3f33e1aa5821216cdf6870c24b" "d143a4dd9292f87b377e87c77f3459d15aa5fb56a670edd2873bd812d95dfa6c" "f03d5bc29c7b8711f8a18cc92dcc2b59b90dcac44e4997daaa4db1ae7d1b419b" "4a892742bd6f8ac795d14a72461ce49bc7eb100583024b0da9b43d79884b7c45" "6e165f5225ce7ce5ca3f2dc8adf827ff8565704bfe625afe4a3cb666a166efd9" "a819fa2e49c3307ec8a8b374f09275ef35b5a47d4fa88b76eba6df7d86bcf70c" "1107071694e48770dfaeb2042b5d2b300efa0a01bfdfe8a9526347fe6f2cc698" "4d12469f94f29f44958a3173a74985f1b6aa383f933a49735d07c3304d77c810" "400fd3e8877904b0cc738d0fded98cdbda263639a007293645f31806895eba9e" "ac4ab3921322aaa6aec49d1268337ec28f88c9ee49fa9cb284d145388fb928a8" "f33b5dfb5c5fb99b5a90feab9158cadc2588c6840211b995622a35419c450b04" "545a268abdb70a28a299242bb79daf7cf1f088ddcbe9518c9d754a6f6159feb6" "42265cac74d3656d9d0b3185d422f8bdaa0f798d842c0a0c2f0786ea387dbe7e" "b6e908ac2a3b9c8a635b36341f19eff119823fea947a0a645bedf77e17e273b8" "3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" default)))
+   '("249e100de137f516d56bcf2e98c1e3f9e1e8a6dce50726c974fa6838fbfcec6b" "e4a702e262c3e3501dfe25091621fe12cd63c7845221687e36a79e17cf3a67e0" "9013233028d9798f901e5e8efb31841c24c12444d3b6e92580080505d56fd392" "571661a9d205cb32dfed5566019ad54f5bb3415d2d88f7ea1d00c7c794e70a36" "5a0ddbd75929d24f5ef34944d78789c6c3421aa943c15218bac791c199fc897d" "f4d1b183465f2d29b7a2e9dbe87ccc20598e79738e5d29fc52ec8fb8c576fcfd" "2ae212d7ee1467754444f84a383d098a238b2534a27cc5ecd6e987d5b9e644df" "83e43336fd5e059a10de3c1120399d74226829e8e7d920626768c6faf2c0411e" "0b5a9e9d85fb7348bf6378ce2fb5c9e3fbfbd36bb24f508f9fc4d72b8e48edf1" "3c7a784b90f7abebb213869a21e84da462c26a1fda7e5bd0ffebf6ba12dbd041" "74e2ed63173b47d6dc9a82a9a8a6a9048d89760df18bc7033c5f91ff4d083e37" "8363207a952efb78e917230f5a4d3326b2916c63237c1f61d7e5fe07def8d378" "0517759e6b71f4ad76d8d38b69c51a5c2f7196675d202e3c2507124980c3c2a3" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "4337503020251b87200e428a1219cdf89d42fba08bc0a1d8ab031164c7925ea2" "21d883fccc7cd1556fbc7b37d10b709189b316be4317b6d4028b335d8827d541" "4764de4e8898fafa22abf3ebe8fe71d6cd528c45f694e32684afea0b825e5ae4" "417b2e4625b6bccb49c6d0714c8d13af1a27f62102ec6d56b538d696fc5ebf19" "4c4c36513edb1edd045f8170c46563bfbb8a2bfa3a80c8c478bdde204313e8b6" "31014fae0ca149e8bbffe40826f8f5952fdb91ea534914622d614b2219e04eaf" "dc7b0ef1298429908ea0a56a9b455d952a5d54b7775e5a7809e5fa1c8e8d8df8" "01633566bc8bfca5421d3a9ad7b7d91cb10743437c2996796d83a8bcc146c85a" "9a870ed55018161c9f022bf47e0e852078ad97c8021a1a9130af9cde1880bfa4" "dca64882039075757807f5cead3cee7a9704223fab1641a9f1b7982bdbb5a0e2" "058ed73311aaaf42e1da18f6aae2ce0a7fd6e37a819064e54f423369f548359a" "b95e452d5eb81406a3f1f61f9df9c2c6ff2d5eddba9d712fcd0f640e0d7707da" "16ebbe9a60555c0f546f58469a31f2312cbd9afe759901ba0ab08fcedc8030b7" "dc0af05ccfb5fc01cf4b7d9c1b63f652f78e3de844e9a7d8e74ecad1f89c001f" "fa362af0e2ae1bda1bab47bc4f15ede63884a2966394d272839d0143a948ec5a" "a5e8a918a21f1d67110b4c2e819b60cc2de7e49b79a80f483a1923e2c74d04d5" "f6bdf7cc215cbd95e09a66ec0511e0932954eadab4c60189dd82370da3f1b3fa" "80de716bfeec860f43d35d302169385bd0698bfb06fd3c16b5378ef5e3e52a24" "3d6e1dd2683f93b0b68d2672b6d922c817817a3f33e1aa5821216cdf6870c24b" "d143a4dd9292f87b377e87c77f3459d15aa5fb56a670edd2873bd812d95dfa6c" "f03d5bc29c7b8711f8a18cc92dcc2b59b90dcac44e4997daaa4db1ae7d1b419b" "4a892742bd6f8ac795d14a72461ce49bc7eb100583024b0da9b43d79884b7c45" "6e165f5225ce7ce5ca3f2dc8adf827ff8565704bfe625afe4a3cb666a166efd9" "a819fa2e49c3307ec8a8b374f09275ef35b5a47d4fa88b76eba6df7d86bcf70c" "1107071694e48770dfaeb2042b5d2b300efa0a01bfdfe8a9526347fe6f2cc698" "4d12469f94f29f44958a3173a74985f1b6aa383f933a49735d07c3304d77c810" "400fd3e8877904b0cc738d0fded98cdbda263639a007293645f31806895eba9e" "ac4ab3921322aaa6aec49d1268337ec28f88c9ee49fa9cb284d145388fb928a8" "f33b5dfb5c5fb99b5a90feab9158cadc2588c6840211b995622a35419c450b04" "545a268abdb70a28a299242bb79daf7cf1f088ddcbe9518c9d754a6f6159feb6" "42265cac74d3656d9d0b3185d422f8bdaa0f798d842c0a0c2f0786ea387dbe7e" "b6e908ac2a3b9c8a635b36341f19eff119823fea947a0a645bedf77e17e273b8" "3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" default))
+ '(package-selected-packages
+   '(kaolin-themes gruvbox-theme org-bullets org-modern doom-themes rust-mode glsl-mode general evil-collection evil)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -619,19 +612,25 @@
  )
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'handmade)
+;;(load-theme 'kaolin-dark)
+;;(load-theme 'kaolin-aurora)
+;;(load-theme 'handmade)
+;;(load-theme 'gruvbox)
+;;(load-theme 'gruvbox-dark-hard)
+;;(load-theme 'naysayer)
 ;;(load-theme 'doom-material-dark)
 ;;(load-theme 'doom-miraware)
 ;;(load-theme 'doom-nord)
 ;;(load-theme 'doom-wilmersdorf)
 
+(global-hl-line-mode 1)
+(set-face-background 'hl-line "midnight blue")
 
-
-(define-key global-map "\t" 'dabbrev-expand)
-(define-key global-map [S-tab] 'indent-for-tab-command)
+(define-key global-map [tab] 'dabbrev-expand)
+(define-key global-map [s-tab] 'indent-for-tab-command)
 (define-key global-map [backtab] 'indent-for-tab-command)
 (define-key global-map "\C-y" 'indent-for-tab-command)
-(define-key global-map [C-tab] 'indent-region)
+(define-key global-map [c-tab] 'indent-region)
 (define-key global-map "	" 'indent-region)
 
 (add-to-list 'default-frame-alist '(font . "LiterationMono Nerd Font-11"))

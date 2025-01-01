@@ -33,9 +33,10 @@ local plugins = {
     'onsails/lspkind.nvim',
     'ThePrimeagen/vim-be-good',
     'tpope/vim-commentary',
-
+    'chaoren/vim-wordmotion',
+    'rluba/jai.vim',
     -- LSP LINES
-    {"https://git.sr.ht/~whynothugo/lsp_lines.nvim", config = function() require("lsp_lines").setup() end,},
+    -- {"https://git.sr.ht/~whynothugo/lsp_lines.nvim", config = function() require("lsp_lines").setup() end,},
 
     -- HARPOON
     {"ThePrimeagen/harpoon", branch = "harpoon2", dependencies = { "nvim-lua/plenary.nvim" },},

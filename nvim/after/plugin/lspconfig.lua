@@ -121,6 +121,22 @@ require("lspconfig").rust_analyzer.setup {
     on_attach = on_attach
 }
 
+local lspconfig = require('lspconfig')
+local configs = require("lspconfig.configs")
+
+-- if not configs.jails then
+--   configs.jails = {
+--     default_config = {
+--       cmd = { 'jails' },
+--       root_dir = lspconfig.util.root_pattern("jails.json", "build.jai", "main.jai"),
+--       filetypes = { 'jai' },
+--       name = "Jails",
+--     },
+--   }
+-- end
+
+-- lspconfig.jails.setup {}
+
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)

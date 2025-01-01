@@ -4,13 +4,6 @@ vim.opt.guicursor = blinkon0
 vim.opt.nu = false
 vim.opt.relativenumber = false
 
-vim.opt.tabstop = 4
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-
-vim.opt.smartindent = true
-
 vim.opt.wrap = false
 vim.opt.fileformat=dos
 
@@ -32,3 +25,4 @@ vim.opt.isfname:append("@-@")
 
 --shows a menu while using tab completion
 vim.cmd("set wildmenu")
+
