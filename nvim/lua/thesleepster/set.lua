@@ -23,6 +23,12 @@ vim.opt.isfname:append("@-@")
 
 --vim.opt.colorcolumn = "80"
 
+vim.opt.cindent = true          -- Enable C-style indentation
+vim.opt.shiftwidth = 4          -- One indent level is 4 spaces
+vim.opt.tabstop = 4             -- Tabs display as 4 spaces
+vim.opt.expandtab = true        -- Use spaces instead of tabs
+vim.opt.cinoptions = "(4"       -- Continuation lines indent 4 spaces from the line with '('
+
 --shows a menu while using tab completion
 vim.cmd("set wildmenu")
 

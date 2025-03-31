@@ -89,7 +89,6 @@ function Sleepster_Run()
 
     local files = vim.fn.glob(rundir .. "*.exe", 0, 1)
     if #files == 0 then
-        print("Your Money is NOT like Lizzo, your pockets are anorexic")
         return
     end
     exe_name = files[1]
@@ -173,6 +172,7 @@ function CustomHighlight()
     vim.fn.matchadd("DiagnosticError", "// TODO")
     vim.fn.matchadd("DiagnosticInfo", "// NOTE")
     vim.fn.matchadd("DiagnosticWarn", "// WARNING")
+    vim.fn.matchadd("DiagnosticWarn", "// IMPORTANT")
     vim.fn.matchadd("DiagnosticWarn", "Sleepster")
     vim.fn.matchadd("DiagnosticWarn", "// HACK")
     vim.fn.matchadd("DiagnosticWarn", "// WARN")

@@ -64,48 +64,10 @@ if vim.g.neovide then
     vim.g.neovide_cursor_trail_size = 0.0
     vim.g.neovide_cursor_trail_length = 0.0
     vim.g.neovide_cursor_antialiasing = true
+    vim.g.neovide_fullscreen = true
+    vim.g.neovide_cursor_animate_in_insert_mode = false
+    vim.g.neovide_cursor_animate_command_line = false
 end
-
--- INDENT STYLING
-vim.opt.tabstop = 4
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-
--- Indentation settings
-vim.opt.smartindent = true  -- Enable smart indentation
-vim.opt.autoindent = true   -- Copy indentation from the current line
-
--- Custom C/C++ style
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "c", "cpp" },
-  callback = function()
-    -- Comment formatting
-    vim.bo.commentstring = "// %s"  -- Single-line comment style
-    vim.bo.formatoptions = vim.bo.formatoptions
-      :gsub("c", "") -- Disable comment auto-wrapping
-      :gsub("o", "") -- Disable comment continuation on newlines
-
-    -- Indentation rules
-    vim.bo.cinoptions = table.concat({
-      "L0",  -- No extra indentation for labels
-      "g0",  -- Align braces with the opening statement
-      "N-s", -- No indentation for `case` labels
-      "p0",  -- Align braces at block level
-      "t0",  -- No extra indentation for `case` label continuation
-      "+4",  -- Indent blocks/statements by 4 spaces
-      "w0",  -- No extra indentation for continued lines in `for` or `if`
-      "c0",  -- No extra indentation for continuation lines
-      "s0",  -- No extra indentation for switch blocks
-    }, ",")
-
-    -- Adjust `cinkeys` to avoid unwanted indentations
-    vim.bo.cinkeys = vim.bo.cinkeys
-      :gsub("{", "") -- Disable auto-indent after '{'
-      :gsub(":", "") -- Disable auto-indent after ':'
-      :gsub("=", "") -- Disable auto-indent after '='
-  end,
-})
 
 ColorMyPencils()
 

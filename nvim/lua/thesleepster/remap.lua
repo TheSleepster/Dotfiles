@@ -46,6 +46,7 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 vim.keymap.set("n", "<leader>n", "i// NOTE(Sleepster): ")
 vim.keymap.set("n", "<leader>t", "i// TODO(Sleepster): ")
 vim.keymap.set("n", "<leader>f", "i// FIX(Sleepster): ")
+vim.keymap.set("n", "<leader>i", "i// IMPORTANT(Sleepster): ")
 
 vim.keymap.set("i", "<C-z>", " = {};")
 vim.keymap.set("i", "<C-b>",  "{}<Left><Enter><Enter><Up><Tab>")
@@ -53,13 +54,20 @@ vim.keymap.set("i", "<C-b>",  "{}<Left><Enter><Enter><Up><Tab>")
 vim.keymap.set("i", "<C-s>", "{};<Left><Left><Enter><Enter><Up><Tab>")
 vim.keymap.set("i", "<C-x>", "{}break;<Left><Left><Left><Left><Left><Left><Left><Enter><Enter><Up><Tab>")
 
+-- Indent current line or selection with Shift+Tab
+vim.keymap.set("n", "<S-Tab>", '==', { noremap = true, silent = true })
+vim.keymap.set("v", "<S-Tab>", '=', { noremap = true, silent = true })
+
+-- Shift + backspace emacs binding, sue me.
+vim.keymap.set("i", "<S-BS>", "<C-w>", { noremap = true, silent = true })
+
 -- LINE DUPLICATION
 vim.keymap.set("n", "<C-d>", "yyp")
 
 -- CUSTOM FUNCTION BINDS
 vim.keymap.set("n", '<A-m>',     ':Build<CR>',         {noremap = true, silent = true})
-vim.keymap.set("n", '<A-F12>',   ':DisplaySB<CR>',     {noremap = true, silent = true})
-vim.keymap.set("n", '<A-S-F12>', ':DisplayOB<CR>',     {noremap = true, silent = true})
+vim.keymap.set("n", '<F12>',     ':DisplayOB<CR>',     {noremap = true, silent = true})
+vim.keymap.set("n", '<S-F12>',   ':DisplaySB<CR>',     {noremap = true, silent = true})
 vim.keymap.set("n", '<C-r>',     ':Run<CR>',           {noremap = true, silent = true})
 vim.keymap.set("n", '<A-e>',     ':cnext<CR>',         {noremap = true, silent = true})
 vim.keymap.set("n", '<A-l>',     ':cprev<CR>',         {noremap = true, silent = true})
