@@ -59,14 +59,25 @@ end, {})
 
 if vim.g.neovide then
     vim.o.guifont = "LiterationMono Nerd Font Propo:h11" -- text below applies for VimScript
+    vim.g.neovide_refresh_rate = 144
     vim.g.neovide_scroll_animation_length = 0.0
     vim.g.neovide_cusor_animation_length = 0.0
+    vim.g.neovide_cursor_short_animation_length = 0.0
     vim.g.neovide_cursor_trail_size = 0.0
     vim.g.neovide_cursor_trail_length = 0.0
     vim.g.neovide_cursor_antialiasing = true
     vim.g.neovide_fullscreen = true
     vim.g.neovide_cursor_animate_in_insert_mode = false
     vim.g.neovide_cursor_animate_command_line = false
+    vim.g.neovide_position_animation_length  = 0;
+    vim.g.neovide_scroll_animation_far_lines = 0;
+
+    vim.api.nvim_set_keymap('v', '<sc-c>', '"+y', {noremap = true})
+    vim.api.nvim_set_keymap('n', '<sc-v>', 'l"+P', {noremap = true})
+    vim.api.nvim_set_keymap('v', '<sc-v>', '"+P', {noremap = true})
+    vim.api.nvim_set_keymap('c', '<sc-v>', '<C-o>l<C-o>"+<C-o>P<C-o>l', {noremap = true})
+    vim.api.nvim_set_keymap('i', '<sc-v>', '<ESC>l"+Pli', {noremap = true})
+    vim.api.nvim_set_keymap('t', '<sc-v>', '<C-\\><C-n>"+Pi', {noremap = true})
 end
 
 ColorMyPencils()

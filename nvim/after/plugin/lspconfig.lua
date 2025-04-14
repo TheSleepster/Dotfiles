@@ -4,7 +4,6 @@ require('mason-lspconfig').setup({
         "ols",
         "glsl_analyzer",
         "omnisharp",
-        "gopls",
         "zls",
         "rust_analyzer",
         "lua_ls",
@@ -58,7 +57,7 @@ vim.diagnostic.config({
 require("lspconfig").clangd.setup {
     on_attach = on_attach,
     cmd = {
-        "C:/Program Files/LLVM/bin/clangd",
+        "clangd",
         "--background-index",
         "--pch-storage=memory",
         "--all-scopes-completion",
@@ -114,6 +113,9 @@ require("lspconfig").gopls.setup {
 }
 
 require("lspconfig").zls.setup {
+    cmd = {
+        "zls",
+    },
     on_attach = on_attach
 }
 
@@ -148,7 +150,6 @@ local gdscript_config = {
 }
 
 vim.diagnostic.config({ virtual_lines = true })
-
 require("lspconfig").gdscript.setup(gdscript_config)
 
 -- define kind_icons array like above
@@ -261,7 +262,8 @@ local cmp = require('cmp')
 
     view = {
         -- custom
-        entries = {name = 'wildmenu', seperator = '|'},
+        --entries = {name = 'wildmenu', seperator = '|'},
+        entries = {name = 'custom', selection_order = 'near_cursor' }
     },
 
     experimental = {

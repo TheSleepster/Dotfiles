@@ -2,7 +2,7 @@
 
 function Sleepster_Build()
     local cwd = vim.fn.getcwd()
-    local filepath = cwd .. "/build.bat"
+    local filepath = cwd .. "/build.sh"
     local current_win = vim.api.nvim_get_current_win()
     local current_buf = vim.api.nvim_get_current_buf()
     local wins = vim.api.nvim_tabpage_list_wins(0)

@@ -41,7 +41,7 @@
 
 (let ((handmade-beige "burlywood3")
       (handmade-dark-blue "midnight blue")
-      (handmade-dark-gray "#161616")
+      (handmade-dark-gray "#101010")
       (handmade-dark-green "DarkGreen")
       (handmade-gold "DarkGoldenrod3")
       (handmade-light-beige "#dab98f")
@@ -67,5 +67,23 @@
    `(handmade-note-face ((t (:foreground ,handmade-dark-green :weight bold :underline t))))
    `(handmade-todo-face ((t (:foreground ,handmade-red :weight bold :underline t))))
    `(hl-line ((t (:background ,handmade-dark-blue))))))
+
+(set-face-attribute 'font-lock-builtin-face nil :foreground "#DAB98F")
+(set-face-attribute 'font-lock-comment-face nil :foreground "gray50")
+(set-face-attribute 'font-lock-constant-face nil :foreground "olive drab")
+(set-face-attribute 'font-lock-doc-face nil :foreground "gray50")
+(set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
+(set-face-attribute 'font-lock-keyword-face nil :foreground "DarkGoldenrod3")
+(set-face-attribute 'font-lock-string-face nil :foreground "olive drab")
+(set-face-attribute 'font-lock-type-face nil :foreground "burlywood3")
+(set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
+(set-face-attribute 'font-lock-function-call-face nil :foreground "DarkGoldenrod3")
+
+(global-hl-line-mode 1)
+(set-face-background 'hl-line "midnight blue")
+
+(set-foreground-color "burlywood3")
+(set-background-color "#101010")
+(set-cursor-color "#40FF40")
 
 (provide-theme 'handmade)

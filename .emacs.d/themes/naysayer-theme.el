@@ -28,9 +28,11 @@
 (defcustom naysayer-theme-cyan "#A1EFE4" "Primary colors - cyan" :type 'string :group 'monokai)
 (defcustom naysayer-theme-violet "#AE81FF" "Primary colors - violet" :type 'string :group 'monokai)
 
-(let ((background "#062329")
-      (gutters    "#062329")
-      (gutter-fg  "#062329")
+;; old is #1f1f1f
+
+(let ((background "#161616")
+      (gutters    "#161616")
+      (gutter-fg  "#f2f4f7")
       (gutters-active "#062329")
       (builtin      "#ffffff")
       (selection  "#0000ff")
