@@ -18,6 +18,9 @@
 (load (locate-user-emacs-file "lisp/jai-mode.el"));
 (load (locate-user-emacs-file "lisp/odin-mode.el"));
 
+(use-package zig-mode
+    :ensure t)
+
 (use-package glsl-mode
     :ensure t)
 
@@ -103,7 +106,7 @@
   ;; Custom comment insertion with TODO, NOTE, IMPORTANT
   (dt/leader-keys
    "t" '(lambda () (interactive) (insert-comment-with-prefix "TODO(") :wk "Insert TODO")
-   "n" '(lambda () (interactive) (insert-comment-with-prefix "NOTE)") :wk "Insert NOTE")
+   "n" '(lambda () (interactive) (insert-comment-with-prefix "NOTE(") :wk "Insert NOTE")
    "i" '(lambda () (interactive) (insert-comment-with-prefix "IMPORTANT(") :wk "Insert IMPORTANT"))
 )
 
@@ -373,27 +376,20 @@
   (insert "   $Creator: Justin Lewis $\n")
   (insert "   ======================================================================== */\n"))
 
- (setq fixme-modes '(c++-mode c-mode emacs-lisp-mode))
- (make-face 'font-lock-fixme-face)
- (make-face 'font-lock-note-face)
- (mapc (lambda (mode)
-	 (font-lock-add-keywords
-	  mode
-	  '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
-            ("\\<\\(NOTE\\)" 1 'font-lock-note-face t))))
-	fixme-modes)
- (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
- (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
-
-
 (defun sleepster-insert-header-or-source-format ()
   "Insert appropriate header or source format for new files."
   (when (and buffer-file-name (eq (point-min) (point-max))) ;; Check if the buffer is empty
-    (cond 
+    (cond
+     ((string-match "\\.h$" buffer-file-name) (sleepster-header-format))
      ((string-match "\\.hin$" buffer-file-name) (sleepster-source-format))
      ((string-match "\\.cin$" buffer-file-name) (sleepster-source-format))
-     ((string-match "\\.h$" buffer-file-name) (sleepster-header-format))
-     ((string-match "\\.cpp$" buffer-file-name) (sleepster-source-format)))))
+     ((string-match "\\.cpp$" buffer-file-name) (sleepster-source-format))
+     ((string-match "\\.zig$" buffer-file-name) (sleepster-source-format))
+     ((string-match "\\.odin$" buffer-file-name) (sleepster-source-format))
+     ;;((string-match "\\.jai$" buffer-file-name) (sleepster-source-format))
+     ((string-match "\\.rs$" buffer-file-name) (sleepster-source-format)))))
+(add-hook 'find-file-hook 'sleepster-insert-header-or-source-format)
+
 
 (add-hook 'find-file-hook 'sleepster-insert-header-or-source-format)
 
@@ -592,20 +588,100 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("d37ff46c451f48a29146563db4c90a9ac60c292056158b15334ed935d172ad9a" "8baf8bfa38619d72cbf021d74a5afd4f55bff78a35b173e5ccaddc234997ad58" "fdc191a4aed1513b19faeb96c335218a8a94fe7416f87eedcb9bacb4511adeb8" "da8bd8d65800f2015ece550d44e164512f718fc27ba7502f09dd721d645afa7d" "f7afc865a5671724575f87516ffed1e30345fafb9ad4732f11afd479d79399e2" "dd5a847f45bd27a9e2e61b42ff85f82a9216361c6861c5550f941bf7c8f3d639" "0e77f9bcd27e1c739659204c35f16fb664a4c2d57bc5bc7af419034a82e9c27e" "626fe31721fda0624734e6e2546dbb2956ac5c0ca517098e2bb60560350ec13d" "0170347031e5dfa93813765bc4ef9269a5e357c0be01febfa3ae5e5fcb351f09" "48042425e84cd92184837e01d0b4fe9f912d875c43021c3bcb7eeb51f1be5710" "4b6cc3b60871e2f4f9a026a5c86df27905fb1b0e96277ff18a76a39ca53b82e1" "b5fab52f16546a15f171e6bd450ff11f2a9e20e5ac7ec10fa38a14bb0c67b9ab" "51fa6edfd6c8a4defc2681e4c438caf24908854c12ea12a1fbfd4d055a9647a3" "e8bd9bbf6506afca133125b0be48b1f033b1c8647c628652ab7a2fe065c10ef0" "6e18353d35efc18952c57d3c7ef966cad563dc65a2bba0660b951d990e23fc07" "7e377879cbd60c66b88e51fad480b3ab18d60847f31c435f15f5df18bdb18184" "4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d" "ffafb0e9f63935183713b204c11d22225008559fa62133a69848835f4f4a758c" "c95813797eb70f520f9245b349ff087600e2bd211a681c7a5602d039c91a6428" "9cd57dd6d61cdf4f6aef3102c4cc2cfc04f5884d4f40b2c90a866c9b6267f2b3" "249e100de137f516d56bcf2e98c1e3f9e1e8a6dce50726c974fa6838fbfcec6b" "e4a702e262c3e3501dfe25091621fe12cd63c7845221687e36a79e17cf3a67e0" "9013233028d9798f901e5e8efb31841c24c12444d3b6e92580080505d56fd392" "571661a9d205cb32dfed5566019ad54f5bb3415d2d88f7ea1d00c7c794e70a36" "5a0ddbd75929d24f5ef34944d78789c6c3421aa943c15218bac791c199fc897d" "f4d1b183465f2d29b7a2e9dbe87ccc20598e79738e5d29fc52ec8fb8c576fcfd" "2ae212d7ee1467754444f84a383d098a238b2534a27cc5ecd6e987d5b9e644df" "83e43336fd5e059a10de3c1120399d74226829e8e7d920626768c6faf2c0411e" "0b5a9e9d85fb7348bf6378ce2fb5c9e3fbfbd36bb24f508f9fc4d72b8e48edf1" "3c7a784b90f7abebb213869a21e84da462c26a1fda7e5bd0ffebf6ba12dbd041" "74e2ed63173b47d6dc9a82a9a8a6a9048d89760df18bc7033c5f91ff4d083e37" "8363207a952efb78e917230f5a4d3326b2916c63237c1f61d7e5fe07def8d378" "0517759e6b71f4ad76d8d38b69c51a5c2f7196675d202e3c2507124980c3c2a3" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "4337503020251b87200e428a1219cdf89d42fba08bc0a1d8ab031164c7925ea2" "21d883fccc7cd1556fbc7b37d10b709189b316be4317b6d4028b335d8827d541" "4764de4e8898fafa22abf3ebe8fe71d6cd528c45f694e32684afea0b825e5ae4" "417b2e4625b6bccb49c6d0714c8d13af1a27f62102ec6d56b538d696fc5ebf19" "4c4c36513edb1edd045f8170c46563bfbb8a2bfa3a80c8c478bdde204313e8b6" "31014fae0ca149e8bbffe40826f8f5952fdb91ea534914622d614b2219e04eaf" "dc7b0ef1298429908ea0a56a9b455d952a5d54b7775e5a7809e5fa1c8e8d8df8" "01633566bc8bfca5421d3a9ad7b7d91cb10743437c2996796d83a8bcc146c85a" "9a870ed55018161c9f022bf47e0e852078ad97c8021a1a9130af9cde1880bfa4" "dca64882039075757807f5cead3cee7a9704223fab1641a9f1b7982bdbb5a0e2" "058ed73311aaaf42e1da18f6aae2ce0a7fd6e37a819064e54f423369f548359a" "b95e452d5eb81406a3f1f61f9df9c2c6ff2d5eddba9d712fcd0f640e0d7707da" "16ebbe9a60555c0f546f58469a31f2312cbd9afe759901ba0ab08fcedc8030b7" "dc0af05ccfb5fc01cf4b7d9c1b63f652f78e3de844e9a7d8e74ecad1f89c001f" "fa362af0e2ae1bda1bab47bc4f15ede63884a2966394d272839d0143a948ec5a" "a5e8a918a21f1d67110b4c2e819b60cc2de7e49b79a80f483a1923e2c74d04d5" "f6bdf7cc215cbd95e09a66ec0511e0932954eadab4c60189dd82370da3f1b3fa" "80de716bfeec860f43d35d302169385bd0698bfb06fd3c16b5378ef5e3e52a24" "3d6e1dd2683f93b0b68d2672b6d922c817817a3f33e1aa5821216cdf6870c24b" "d143a4dd9292f87b377e87c77f3459d15aa5fb56a670edd2873bd812d95dfa6c" "f03d5bc29c7b8711f8a18cc92dcc2b59b90dcac44e4997daaa4db1ae7d1b419b" "4a892742bd6f8ac795d14a72461ce49bc7eb100583024b0da9b43d79884b7c45" "6e165f5225ce7ce5ca3f2dc8adf827ff8565704bfe625afe4a3cb666a166efd9" "a819fa2e49c3307ec8a8b374f09275ef35b5a47d4fa88b76eba6df7d86bcf70c" "1107071694e48770dfaeb2042b5d2b300efa0a01bfdfe8a9526347fe6f2cc698" "4d12469f94f29f44958a3173a74985f1b6aa383f933a49735d07c3304d77c810" "400fd3e8877904b0cc738d0fded98cdbda263639a007293645f31806895eba9e" "ac4ab3921322aaa6aec49d1268337ec28f88c9ee49fa9cb284d145388fb928a8" "f33b5dfb5c5fb99b5a90feab9158cadc2588c6840211b995622a35419c450b04" "545a268abdb70a28a299242bb79daf7cf1f088ddcbe9518c9d754a6f6159feb6" "42265cac74d3656d9d0b3185d422f8bdaa0f798d842c0a0c2f0786ea387dbe7e" "b6e908ac2a3b9c8a635b36341f19eff119823fea947a0a645bedf77e17e273b8" "3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558" default))
+   '("6690ffddee04859b0a9f3b59ee0cb6fde32fde4628d56d0b22d3f752c10d15bb"
+     "33ffa159aed0677e5ff19000a8fdab9c1f6e9f28687b3f91ca3d1510b8870309"
+     "eaf38079dd21acf9105ede3638e4540e5e99c208c01e37f1c7d3d26aa656f45a"
+     "8e8a42a19ae8e3083a6f54f7d1310fecd2b869447d36ce094787fd38fb339fb4"
+     "43a4d5f3c3e0d10de76cd8f29e02cf0489c4764c98e57752758f6115f0c6a189"
+     "8c50e004e4f05484bb53759d151b32a8fb9ba2e33b5cb62a88d4eee3019603f3"
+     "9ae9c916c6b1171c350522ea5625b23e83ea5979c0e52918401db1d70c330684"
+     "c52f4f9174414989ee2e1da386b95e3feedef31c55984ababcd8793acf1f2a88"
+     "d65500e9211173b7948bb62e80d57f7a8d193491c3704ebab18128ed907c045d"
+     "550703dee551cc8e60880d9d09b1d6e8f02a2165ab1ecda4708c8462d90911e8"
+     "d37ff46c451f48a29146563db4c90a9ac60c292056158b15334ed935d172ad9a"
+     "8baf8bfa38619d72cbf021d74a5afd4f55bff78a35b173e5ccaddc234997ad58"
+     "fdc191a4aed1513b19faeb96c335218a8a94fe7416f87eedcb9bacb4511adeb8"
+     "da8bd8d65800f2015ece550d44e164512f718fc27ba7502f09dd721d645afa7d"
+     "f7afc865a5671724575f87516ffed1e30345fafb9ad4732f11afd479d79399e2"
+     "dd5a847f45bd27a9e2e61b42ff85f82a9216361c6861c5550f941bf7c8f3d639"
+     "0e77f9bcd27e1c739659204c35f16fb664a4c2d57bc5bc7af419034a82e9c27e"
+     "626fe31721fda0624734e6e2546dbb2956ac5c0ca517098e2bb60560350ec13d"
+     "0170347031e5dfa93813765bc4ef9269a5e357c0be01febfa3ae5e5fcb351f09"
+     "48042425e84cd92184837e01d0b4fe9f912d875c43021c3bcb7eeb51f1be5710"
+     "4b6cc3b60871e2f4f9a026a5c86df27905fb1b0e96277ff18a76a39ca53b82e1"
+     "b5fab52f16546a15f171e6bd450ff11f2a9e20e5ac7ec10fa38a14bb0c67b9ab"
+     "51fa6edfd6c8a4defc2681e4c438caf24908854c12ea12a1fbfd4d055a9647a3"
+     "e8bd9bbf6506afca133125b0be48b1f033b1c8647c628652ab7a2fe065c10ef0"
+     "6e18353d35efc18952c57d3c7ef966cad563dc65a2bba0660b951d990e23fc07"
+     "7e377879cbd60c66b88e51fad480b3ab18d60847f31c435f15f5df18bdb18184"
+     "4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d"
+     "ffafb0e9f63935183713b204c11d22225008559fa62133a69848835f4f4a758c"
+     "c95813797eb70f520f9245b349ff087600e2bd211a681c7a5602d039c91a6428"
+     "9cd57dd6d61cdf4f6aef3102c4cc2cfc04f5884d4f40b2c90a866c9b6267f2b3"
+     "249e100de137f516d56bcf2e98c1e3f9e1e8a6dce50726c974fa6838fbfcec6b"
+     "e4a702e262c3e3501dfe25091621fe12cd63c7845221687e36a79e17cf3a67e0"
+     "9013233028d9798f901e5e8efb31841c24c12444d3b6e92580080505d56fd392"
+     "571661a9d205cb32dfed5566019ad54f5bb3415d2d88f7ea1d00c7c794e70a36"
+     "5a0ddbd75929d24f5ef34944d78789c6c3421aa943c15218bac791c199fc897d"
+     "f4d1b183465f2d29b7a2e9dbe87ccc20598e79738e5d29fc52ec8fb8c576fcfd"
+     "2ae212d7ee1467754444f84a383d098a238b2534a27cc5ecd6e987d5b9e644df"
+     "83e43336fd5e059a10de3c1120399d74226829e8e7d920626768c6faf2c0411e"
+     "0b5a9e9d85fb7348bf6378ce2fb5c9e3fbfbd36bb24f508f9fc4d72b8e48edf1"
+     "3c7a784b90f7abebb213869a21e84da462c26a1fda7e5bd0ffebf6ba12dbd041"
+     "74e2ed63173b47d6dc9a82a9a8a6a9048d89760df18bc7033c5f91ff4d083e37"
+     "8363207a952efb78e917230f5a4d3326b2916c63237c1f61d7e5fe07def8d378"
+     "0517759e6b71f4ad76d8d38b69c51a5c2f7196675d202e3c2507124980c3c2a3"
+     "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738"
+     "4337503020251b87200e428a1219cdf89d42fba08bc0a1d8ab031164c7925ea2"
+     "21d883fccc7cd1556fbc7b37d10b709189b316be4317b6d4028b335d8827d541"
+     "4764de4e8898fafa22abf3ebe8fe71d6cd528c45f694e32684afea0b825e5ae4"
+     "417b2e4625b6bccb49c6d0714c8d13af1a27f62102ec6d56b538d696fc5ebf19"
+     "4c4c36513edb1edd045f8170c46563bfbb8a2bfa3a80c8c478bdde204313e8b6"
+     "31014fae0ca149e8bbffe40826f8f5952fdb91ea534914622d614b2219e04eaf"
+     "dc7b0ef1298429908ea0a56a9b455d952a5d54b7775e5a7809e5fa1c8e8d8df8"
+     "01633566bc8bfca5421d3a9ad7b7d91cb10743437c2996796d83a8bcc146c85a"
+     "9a870ed55018161c9f022bf47e0e852078ad97c8021a1a9130af9cde1880bfa4"
+     "dca64882039075757807f5cead3cee7a9704223fab1641a9f1b7982bdbb5a0e2"
+     "058ed73311aaaf42e1da18f6aae2ce0a7fd6e37a819064e54f423369f548359a"
+     "b95e452d5eb81406a3f1f61f9df9c2c6ff2d5eddba9d712fcd0f640e0d7707da"
+     "16ebbe9a60555c0f546f58469a31f2312cbd9afe759901ba0ab08fcedc8030b7"
+     "dc0af05ccfb5fc01cf4b7d9c1b63f652f78e3de844e9a7d8e74ecad1f89c001f"
+     "fa362af0e2ae1bda1bab47bc4f15ede63884a2966394d272839d0143a948ec5a"
+     "a5e8a918a21f1d67110b4c2e819b60cc2de7e49b79a80f483a1923e2c74d04d5"
+     "f6bdf7cc215cbd95e09a66ec0511e0932954eadab4c60189dd82370da3f1b3fa"
+     "80de716bfeec860f43d35d302169385bd0698bfb06fd3c16b5378ef5e3e52a24"
+     "3d6e1dd2683f93b0b68d2672b6d922c817817a3f33e1aa5821216cdf6870c24b"
+     "d143a4dd9292f87b377e87c77f3459d15aa5fb56a670edd2873bd812d95dfa6c"
+     "f03d5bc29c7b8711f8a18cc92dcc2b59b90dcac44e4997daaa4db1ae7d1b419b"
+     "4a892742bd6f8ac795d14a72461ce49bc7eb100583024b0da9b43d79884b7c45"
+     "6e165f5225ce7ce5ca3f2dc8adf827ff8565704bfe625afe4a3cb666a166efd9"
+     "a819fa2e49c3307ec8a8b374f09275ef35b5a47d4fa88b76eba6df7d86bcf70c"
+     "1107071694e48770dfaeb2042b5d2b300efa0a01bfdfe8a9526347fe6f2cc698"
+     "4d12469f94f29f44958a3173a74985f1b6aa383f933a49735d07c3304d77c810"
+     "400fd3e8877904b0cc738d0fded98cdbda263639a007293645f31806895eba9e"
+     "ac4ab3921322aaa6aec49d1268337ec28f88c9ee49fa9cb284d145388fb928a8"
+     "f33b5dfb5c5fb99b5a90feab9158cadc2588c6840211b995622a35419c450b04"
+     "545a268abdb70a28a299242bb79daf7cf1f088ddcbe9518c9d754a6f6159feb6"
+     "42265cac74d3656d9d0b3185d422f8bdaa0f798d842c0a0c2f0786ea387dbe7e"
+     "b6e908ac2a3b9c8a635b36341f19eff119823fea947a0a645bedf77e17e273b8"
+     "3d39093437469a0ae165c1813d454351b16e4534473f62bc6e3df41bb00ae558"
+     default))
  '(package-selected-packages
-   '(lua-mode treesit-auto org-roam kaolin-themes gruvbox-theme org-bullets org-modern doom-themes rust-mode glsl-mode general evil-collection evil)))
+   '(lua-mode treesit-auto org-roam kaolin-themes gruvbox-theme
+              org-bullets org-modern doom-themes rust-mode glsl-mode
+              general evil-collection evil)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
-)
+ )
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 ;;(load-theme 'kaolin-dark)
 ;;(load-theme 'kaolin-aurora)
-(load-theme 'handmade)
+(load-theme 'nvim_dark)
+;;(load-theme 'handmade)
 ;;(load-theme 'gruvbox)
 ;;(load-theme 'gruvbox-dark-hard)
 ;;(load-theme 'naysayer)
@@ -630,14 +706,144 @@
 ;;(add-to-list 'default-frame-alist '(font . "LiterationMono Nerd Font-11"))
 ;;(add-to-list 'default-frame-alist '(font . "More Perfect DOS VGA-14"))
 ;;(set-face-attribute 'default t :font "More Perfect DOS VGA-14")
+
+ (setq fixme-modes '(c++-mode c-mode jai-mode odin-mode zig-mode rust-mode emacs-lisp-mode))
+ (make-face 'font-lock-fixme-face)
+ (make-face 'font-lock-note-face)
+ (mapc (lambda (mode)
+	 (font-lock-add-keywords
+	  mode
+	  '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
+            ("\\<\\(NOTE\\)" 1 'font-lock-note-face t))))
+	fixme-modes)
+
+ (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
+ (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
+
+(load-file "~/.emacs.d/lisp/nvim-dark-faces.el")
 (defun highlight-function-calls ()
   "Highlight function calls in C/C++ modes."
   (font-lock-add-keywords
    nil
    '(("\\<\\(\\w+\\)\\s-*(" 1 'font-lock-function-call-face))))
 
+(defun add-operator-highlighting ()
+  "Add font-lock rules to highlight operators in red."
+  (font-lock-add-keywords nil
+    '(("\\([-+*/%=&|!<>~^]\\)" 1 'font-lock-operator-face))))
+
+;; Font-lock rules
+(defun add-custom-highlighting ()
+  "Add font-lock rules for keywords, operators, enum members, constants, and numbers."
+  (font-lock-add-keywords nil
+    '(("\\<\\(if\\|else\\|while\\|for\\|case\\|break\\|return\\|switch\\|struct\\|class\\|inline\\|void\\)\\>" 0 'font-lock-keyword-face) ; Keywords
+      ("\\([-+*/%=&|!<>~^]\\)" 1 'font-lock-operator-face) ; Operators
+      ("\\<\\(INVALID_HANDLE_VALUE\\)\\>" 0 'font-lock-constant-face prepend) ; Constants
+      ("\\<[A-Z][A-Z0-9_]*_[A-Z0-9][A-Z0-9_]*\\>" 0 'font-lock-enum-member-face prepend) ; Enum members
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face))) ; Numbers
+  (font-lock-flush)
+  (font-lock-fontify-buffer))
+
+;; OTHER LANGUAGES
+(defun add-enum-highlighting ()
+  "Add font-lock rules for enum members and constants."
+  (font-lock-add-keywords nil
+    '(("\\<\\(INVALID_HANDLE_VALUE\\)\\>" 0 'font-lock-constant-face prepend) ; Constants
+      ("\\<[A-Z][A-Z0-9_]*_[A-Z0-9][A-Z0-9_]*\\>" 0 'font-lock-enum-member-face prepend))) ; Enums
+  (font-lock-flush)
+  (font-lock-fontify-buffer))
+
+;; GLSL Mode
+(defun add-glsl-custom-highlighting ()
+  "Add font-lock rules for GLSL."
+  (font-lock-add-keywords nil
+    '(("\\<\\(struct\\|uniform\\|varying\\|in\\|out\\|void\\|float\\|vec[2-4]\\|mat[2-4]\\|sampler2D\\)\\>" 0 'font-lock-keyword-face) ; Keywords
+      ("\\([-+*/%=&|!<>]\\)" 1 'font-lock-operator-face) ; Operators
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face))) ; Numbers
+  (add-enum-highlighting))
+(add-hook 'glsl-mode-hook #'add-glsl-custom-highlighting)
+
+;; Odin Mode
+(defun add-odin-custom-highlighting ()
+  "Add font-lock rules for Odin."
+  (font-lock-add-keywords nil
+    '(("\\<\\(struct\\|enum\\|proc\\|if\\|for\\|when\\|return\\|defer\\)\\>" 0 'font-lock-keyword-face) ; Keywords
+      ("\\([-+*/%=&|!<>~^:]\\|:=\\|::\\)" 1 'font-lock-operator-face)
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face))) ; Numbers
+  (add-enum-highlighting))
+(add-hook 'odin-mode-hook #'add-odin-custom-highlighting)
+
+;; Zig Mode
+(defun add-zig-custom-highlighting ()
+  "Add font-lock rules for Zig."
+  (font-lock-add-keywords nil
+    '(("\\<\\(struct\\|enum\\|fn\\|const\\|var\\|if\\|else\\|while\\|return\\)\\>" 0 'font-lock-keyword-face) ; Keywords
+      ("\\([-+*/%=&|!<>]\\)" 1 'font-lock-operator-face) ; Operators
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face))) ; Numbers
+  (add-enum-highlighting))
+(add-hook 'zig-mode-hook #'add-zig-custom-highlighting)
+
+;; Rust Mode
+(defun add-rust-custom-highlighting ()
+  "Add font-lock rules for Rust."
+  (font-lock-add-keywords nil
+    '(("\\<\\(struct\\|enum\\|fn\\|let\\|mut\\|if\\|else\\|match\\|return\\)\\>" 0 'font-lock-keyword-face) ; Keywords
+      ("\\([-+*/%=&|!<>]\\)" 1 'font-lock-operator-face) ; Operators
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face))) ; Numbers
+  ;; Rust enums often use CamelCase, so add a fallback
+  (font-lock-add-keywords nil
+    '(("\\<\\([A-Z][A-Za-z0-9]*\\)\\>" 0 'font-lock-enum-member-face t))) ; CamelCase enums
+  (add-enum-highlighting))
+(add-hook 'rust-mode-hook #'add-rust-custom-highlighting)
+
+(add-to-list 'auto-mode-alist '("\\.glsl\\'" . glsl-mode))
+(add-to-list 'auto-mode-alist '("\\.odin\\'" . odin-mode))
+(add-to-list 'auto-mode-alist '("\\.zig\\'" . zig-mode))
+(add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
+
 ;; Hook into C/C++ modes
+(add-hook 'c-mode-common-hook 'add-custom-highlighting)
+(add-hook 'c-mode-common-hook 'add-operator-highlighting)
 (add-hook 'c-mode-common-hook 'highlight-function-calls)
+(add-hook 'c-mode-hook (lambda ()
+                           (font-lock-add-keywords nil
+                             '(("\\<INVALID_HANDLE_VALUE\\>" 0 'font-lock-constant-face prepend)
+                               ("\\<[A-Z][A-Z0-9_]*_[A-Z0-9][A-Z0-9_]*\\>" 0 'font-lock-enum-member-face prepend)))
+                           (font-lock-flush)
+                           (font-lock-fontify-buffer)))
+
+(add-hook 'c++-mode-hook (lambda ()
+                           (font-lock-add-keywords nil
+                             '(("\\<INVALID_HANDLE_VALUE\\>" 0 'font-lock-constant-face prepend)
+                               ("\\<[A-Z][A-Z0-9_]*_[A-Z0-9][A-Z0-9_]*\\>" 0 'font-lock-enum-member-face prepend)))
+                           (font-lock-flush)
+                           (font-lock-fontify-buffer)))
+
+;; Jai custom highlighting
+(defun add-jai-custom-highlighting ()
+  (font-lock-add-keywords nil
+    '(;; Function declarations (e.g., foo :: ())
+      ("\\<\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*::\\s-*("
+       1 font-lock-function-name-face t)
+      ;; Function calls (e.g., Foo())
+      ("\\<\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*\\s-*(" 1 'font-lock-function-name-face)
+      ("#\\w+" 0 font-lock-preprocessor-face t)
+      ("@\\w+" 0 font-lock-preprocessor-face t)
+      ;; Keywords
+      ("\\<\\(if\\|ifx\\|else\\|while\\|for\\|switch\\|case\\|struct\\|enum\\|return\\|defer\\|inline\\|using\\|cast\\)\\>" 0 'font-lock-keyword-face)
+      ;; Operators
+      ("\\([-+*/%=&|!<>~^:]\\|:=\\|::\\)" 0 'font-lock-operator-face)
+      ;; Numbers
+      ("\\<[0-9]+\\(\\.[0-9]+\\)?\\>" 0 'font-lock-number-face)))
+  (font-lock-flush)
+  (font-lock-fontify-buffer))
+
+;; Hook into jai mode
+(add-hook 'jai-mode-hook #'add-jai-custom-highlighting)
+(add-hook 'jai-mode-hook (lambda ()
+                           (font-lock-add-keywords nil
+                             '(("\\<\\([A-Za-z_][A-Za-z0-9_]*\\(\\.[A-Za-z_][A-Za-z0-9_]*\\)*\\)\\s-*("
+                                1 'font-lock-function-name-face)))))
 
 (defun post-load-stuff ()
   (interactive)
